@@ -159,7 +159,6 @@ def main():
     print('Welcome to Python Minesweeper! You must enter a move in the form: \'1 2 Action\', where Action is Flag or Open')
 
     N = 5
-    # vertical = 3
     mines = 5
     # Создание доски для сапёра
     creat_board(N)
