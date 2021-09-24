@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import pickle
 
 
 def get_mines(N, M, mines):
@@ -160,11 +161,11 @@ def check_size(text):
         print(text)
         try:
             str_ = int(input())
-            if str_ < 0:
+            if str_ < 0 or str_ > 9:
                 raise ValueError
             break
         except ValueError:
-            print("Wrong Input! Try again")
+            print("Wrong Input! Try again. Field size does not exceed 9")
     return str_
 
 def check_mines(N, M):
@@ -184,36 +185,83 @@ def check_mines(N, M):
             print('Too many mines. Mines should be less than {}'.format(size))
     return str_
 
-def main():
-    print('Welcome to Python Minesweeper! You must enter a move in the form: \'1 2 Action\', where Action is Flag or Open')
-
-    print('')
-    N = check_size('enter the number of rows in the field:')
-    M = check_size('enter the number of cols in the field:')
-    mines = check_mines(N, M)
-
-
-
-    # Создание доски для сапёра
-    creat_board(N, M)
-    count_flag = 0
-    coord_flags = []
-
-    # рандомно расставляем мины на поле и запоминаем их координаты
-    coord_mines = get_mines(N, M, mines)
-    # заполняем поле метками по положению мин
-    game = get_numbers(N, M,  coord_mines)
-    # добавляем мины на поле
-    for row, col in coord_mines:
-        game[row, col] = -1
-    # создаём массив, отражающий ходы игрока
-    board_open = np.full((N,M), '*')
+def check_answer(text):
+    print(text)
 
     while True:
+        try:
+            str_ = input().strip()
+            if str_ != 'old' and str_ != 'new':
+                raise ValueError
+        except ValueError:
+            print("Wrong Input! Try again")
+            continue
+        if str_ == 'new':
+            N = check_size('enter the number of rows in the field:')
+            M = check_size('enter the number of cols in the field:')
+            mines = check_mines(N, M)
+            # Создание доски для сапёра
+            creat_board(N, M)
+            count_flag = 0
+            coord_flags = []
+            # рандомно расставляем мины на поле и запоминаем их координаты
+            coord_mines = get_mines(N, M, mines)
+            # заполняем поле метками по положению мин
+            game = get_numbers(N, M, coord_mines)
+            # добавляем мины на поле
+            for row, col in coord_mines:
+                game[row, col] = -1
+            # создаём массив, отражающий ходы игрока
+            board_open = np.full((N, M), '*')
+        elif str_ == 'old':
+            try:
+                with open('board_open.pkl', 'rb') as f:
+                    board_open = pickle.load(f)
+                with open('game.pkl', 'rb') as f:
+                    game = pickle.load(f)
+                with open('coord_mines.pkl', 'rb') as f:
+                    coord_mines = pickle.load(f)
+                with open('coord_flags.pkl', 'rb') as f:
+                    coord_flags = pickle.load(f)
+                with open('count_flag.pkl', 'rb') as f:
+                    count_flag = pickle.load(f)
+                N = board_open.shape[0]
+                M = board_open.shape[1]
+                mines = len(coord_mines)
+                print_board(N, M, board_open)
+            except Exception:
+                print('There is no saved game, start a new game')
+                continue
+        break
+    return N, M, board_open, game, mines, coord_mines, count_flag, coord_flags
 
+
+
+def main():
+
+    print('Welcome to Python Minesweeper!')
+
+    N, M, board_open, game, mines, coord_mines, count_flag, coord_flags = check_answer('Select action: \n[new] - new game\n[old] - load the game\nyou action:')
+    print('You must enter a move in the form: \'1 2 Action\', where Action is Flag or Open')
+    while True:
+        print('If you want to close the game, enter [end] and the game will be saved')
         print('Type action:')
-        input_str = input().split()
+        input_str = input()
 
+        if input_str == 'end':
+            with open('board_open.pkl', 'wb') as f:
+                pickle.dump(board_open, f)
+            with open('game.pkl', 'wb') as f:
+                pickle.dump(game, f)
+            with open('coord_mines.pkl', 'wb') as f:
+                pickle.dump(coord_mines, f)
+            with open('coord_flags.pkl', 'wb') as f:
+                pickle.dump(coord_flags, f)
+            with open('count_flag.pkl', 'wb') as f:
+                pickle.dump(count_flag, f)
+            break
+        else:
+            input_str = input_str.split()
         # если длина ввода больше положенной [X, Y, Action] - 3
         if len(input_str) != 3:
             print("Wrong Input! Try again")
@@ -280,6 +328,7 @@ def main():
             print("You've won!")
             break
         print_board(N, M, board_open)
+
 
 
 if __name__ == "__main__":
